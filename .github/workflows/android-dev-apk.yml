@@ -172,7 +172,7 @@ jobs:
             tools/android/build/kgsl_chip_id.c -o out/arm64/kgsl-chip-id
           find .local-deps/android/migration/x/rootfs/usr/lib/aarch64-linux-gnu \
             -type f -printf '%f\n' | sort -u > "$RUNNER_TEMP/device-libs.txt"
-          python3 tools/android/build/build_arm64_bundle.py \
+          GOW3_SKIP_GAME_PATCH_PARTS=1 python3 tools/android/build/build_arm64_bundle.py \
             --device-libs "$RUNNER_TEMP/device-libs.txt" \
             --sysroot .local-deps/android/arm64-sysroot
 
