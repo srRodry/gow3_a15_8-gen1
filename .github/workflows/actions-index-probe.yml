@@ -1,0 +1,19 @@
+name: actions-index-probe
+
+on:
+  push:
+    branches: [android]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Confirm Actions indexing
+        run: |
+          echo "GitHub Actions is active for srRodry/gow3_a15_8-gen1"
+          echo "ref=$GITHUB_REF"
+          echo "sha=$GITHUB_SHA"
