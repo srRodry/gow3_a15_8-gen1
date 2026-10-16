@@ -17,6 +17,8 @@ fi
 if [[ -n ${GOW3_LLD_PREFIX:-} && -d $GOW3_LLD_PREFIX/bin ]]; then
     export PATH="$GOW3_LLD_PREFIX/bin:$PATH"
 fi
+# The LSFG CMake ARM64 cross build must be isolated from conda host link flags too.
+source tools/android/build/clean_cross_env.sh
 for tool in git cmake ninja llvm-strip; do
     command -v "$tool" >/dev/null || die "$tool is required"
 done

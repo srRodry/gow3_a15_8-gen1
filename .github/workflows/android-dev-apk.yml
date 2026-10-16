@@ -128,6 +128,21 @@ jobs:
         shell: bash -el {0}
         run: bash ci/setup-deps.sh "$CONDA_PREFIX"
 
+      - name: Preflight graphics build tools
+        shell: bash -el {0}
+        run: |
+          set -euo pipefail
+          echo "Active build environment: ${CONDA_PREFIX:-not-set}"
+          for tool in clang clang++ llvm-ar llvm-strip bison flex ninja cmake pkg-config glslangValidator; do
+            command -v "$tool" || {
+              echo "::error title=Missing graphics build tool::$tool is not available in the build environment"
+              exit 1
+            }
+          done
+          glslangValidator --version
+          bison -Wcounterexamples -V >/dev/null
+          echo "Graphics toolchain preflight passed"
+
       - name: Configure temporary paths
         shell: bash
         run: |
@@ -157,6 +172,13 @@ jobs:
             libxcb-dri3-dev libxcb-present-dev libxcb-sync-dev libxcb-shm0-dev libxshmfence-dev \
             libx11-dev libxrandr-dev libdrm-dev
 
+      - name: Preflight ARM64 linker and libatomic before native builds
+        shell: bash -el {0}
+        run: bash tools/android/build/preflight_turnip_link.sh
+
+      - name: Validate launcher compilation before native runtime
+        run: bash android-launcher/gradlew -p android-launcher :app:compileReleaseJavaWithJavac --no-daemon --max-workers=2
+
       - name: Build ARM64 native runtime
         shell: bash -el {0}
         run: |
@@ -177,7 +199,11 @@ jobs:
             --sysroot .local-deps/android/arm64-sysroot
 
       - name: Build Turnip and LSFG variants
+        shell: bash -el {0}
         run: |
+          set -euo pipefail
+          command -v glslangValidator
+          glslangValidator --version
           bash tools/android/build/build_turnip.sh main
           bash tools/android/build/build_turnip.sh gen8
           bash tools/android/build/build_lsfg.sh
