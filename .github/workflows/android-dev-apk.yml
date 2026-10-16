@@ -1,4 +1,5 @@
 name: android-dev-apk
+# SM8475 workflow refresh after enabling Actions
 
 on:
   pull_request:
