@@ -11,6 +11,10 @@ sysroot="${GOW3_MESA_SYSROOT:-$PWD/.local-deps/android/mesa-sysroot}"
 command -v clang >/dev/null
 command -v llvm-readelf >/dev/null
 command -v glslangValidator >/dev/null
+[[ -f "$sysroot/usr/include/spirv-tools/libspirv.h" ]] || {
+  echo "cross preflight: ARM64 SPIRV-Tools headers missing from sysroot" >&2
+  exit 1
+}
 # The Debian cross sysroot keeps libatomic.a under the GCC target directory.
 # Use the *target* archive explicitly; never resolve it from CONDA_PREFIX.
 shopt -s nullglob
