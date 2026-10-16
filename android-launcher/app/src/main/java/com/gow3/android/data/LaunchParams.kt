@@ -27,8 +27,8 @@ internal data class LaunchOption(val value: String, val labelRes: Int)
  * 当两者不一致时（fps_limit：Java 前端提供 40/45，但 `ParseFpsLimit` 把它们映射为 0）
  * 以运行时取值域为准，确保每个选项都实际生效。
  *
- * 各参数的默认值均为移动端优化值（render_resolution=720p、fps_limit=60、
- * engine_fps=60；display_mode 已从可编辑项移除，固定 fullscreen）。这些默认值
+ * SM8475 性能基线默认值为 render_resolution=480p、fps_limit=30、engine_fps=60；
+ * display_mode 已从可编辑项移除，固定 fullscreen。这些默认值
  * MUST 与 `tools/android/config/gow3-default.ini`（首启落盘为 gow3.ini 的基准）
  * 保持一致，避免 UI 展示默认与实际运行默认漂移。
  */
@@ -54,9 +54,9 @@ internal object LaunchParams {
                 LaunchOption("1800p", R.string.param_option_1800p),
                 LaunchOption("4K", R.string.param_option_4k),
             ),
-            // 移动端优化默认值：720p 内部分辨率 + FSR 升采样，手机/平板上更流畅省电。
+            // SM8475 baseline: 480p game target; FSR 3.1 Performance preset halves it internally.
             // 与 tools/android/config/gow3-default.ini 保持一致。
-            defaultValue = "720p",
+            defaultValue = "480p",
         ),
         LaunchParam(
             key = "fps_limit", labelRes = R.string.param_fps_limit, groupRes = R.string.param_group_performance,
@@ -67,9 +67,9 @@ internal object LaunchParams {
                 LaunchOption("240", R.string.param_option_240),
                 LaunchOption("0", R.string.param_option_unlimited),
             ),
-            // 移动端优化默认值：以 60 封顶，避免无限帧率导致发热与耗电。
+            // First SM8475 validation targets sustained 30 FPS; raise only after frametime is stable.
             // 与 tools/android/config/gow3-default.ini 保持一致。
-            defaultValue = "60",
+            defaultValue = "30",
         ),
         LaunchParam(
             key = "engine_fps", labelRes = R.string.param_engine_fps, groupRes = R.string.param_group_performance,
@@ -89,7 +89,7 @@ internal object LaunchParams {
                 LaunchOption("0", R.string.param_option_off),
                 LaunchOption("1", R.string.param_option_on),
             ),
-            defaultValue = "1",
+            defaultValue = "0",
             descriptionRes = R.string.param_desc_vsync,
         ),
         LaunchParam(

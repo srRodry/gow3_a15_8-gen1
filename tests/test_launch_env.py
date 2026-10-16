@@ -40,6 +40,18 @@ class LaunchEnvReasonTests(unittest.TestCase):
         self.assertEqual(plan['updates']['GOW3_PATCH_STATUS'], 'validated')
         self.assertIn('Bug Fix - Texture Corruption Fix', plan['patch_names'])
 
+    def test_android_does_not_override_ini_upscaler(self):
+        self.config.write_text('upscaler=fsr3\nrender_resolution=480p\nengine_fps=60\n',
+                               encoding='utf-8')
+        plan = self._plan()
+        self.assertNotIn('GOW3_UPSCALER', plan['updates'])
+        self.assertEqual(plan['updates']['GOW3_READBACK_LINEAR'], '1')
+        self.assertIn('Resolution Patch - 480p', plan['patch_names'])
+
+    def test_explicit_upscaler_environment_remains_untouched(self):
+        plan = self._plan({'GOW3_UPSCALER': 'none'})
+        self.assertNotIn('GOW3_UPSCALER', plan['updates'])
+
     def test_patch_conflict_reason_and_no_patches(self):
         # Two resolution patches are exclusive: select none and report the conflict.
         plan = self._plan({'GOW3_PATCHES': 'Resolution Patch - 4K;Resolution Patch - 720p',

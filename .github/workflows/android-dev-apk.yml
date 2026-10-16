@@ -3,7 +3,7 @@ name: android-dev-apk
 on:
   pull_request:
   push:
-    branches: [android, main, gow3]
+    branches: [android, main, gow3, feature/sm8475-performance]
     tags: ['v*']
   workflow_dispatch:
 
