@@ -40,7 +40,9 @@ def migrate_interpreters(rootfs):
 
     rewritten = 0
     for path in sorted(rootfs.rglob('*')):
-        if not path.is_file():
+        # Symlinks can resolve into host /usr during CI extraction. Never
+        # inspect or rewrite a host binary through a rootfs symlink.
+        if path.is_symlink() or not path.is_file():
             continue
         try:
             info = inspect(path)

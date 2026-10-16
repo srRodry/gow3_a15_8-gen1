@@ -35,12 +35,14 @@ def derive(game, config, state_path, env):
 
     graphics, reverted = graphics_options.prepare(config, state_path)
     updates = dict(graphics_options.environment(graphics))
-    # The temporal upscalers and motion vectors are not calibrated for this game yet; linear
-    # image readbacks fix its corrupted textures. Defaults only: an explicit value wins.
-    for key, default in (('GOW3_UPSCALER', 'none'), ('GOW3_READBACK_LINEAR', '1')):
-        if key not in env:
-            updates[key] = default
-        updates[f'{key}_SOURCE'] = 'override' if key in env else 'android-safe-default'
+    # The launcher/in-game settings own the upscaler choice. Do not override GOW3_UPSCALER here:
+    # doing so made gow3.ini say fsr3 while Android actually forced "none". Keep only the linear
+    # readback safety default; an explicit environment override still wins.
+    if 'GOW3_READBACK_LINEAR' not in env:
+        updates['GOW3_READBACK_LINEAR'] = '1'
+    updates['GOW3_READBACK_LINEAR_SOURCE'] = (
+        'override' if 'GOW3_READBACK_LINEAR' in env else 'android-safe-default'
+    )
 
     names, dmem, vblank = [], None, None
     identity = patch_profile_status(game)

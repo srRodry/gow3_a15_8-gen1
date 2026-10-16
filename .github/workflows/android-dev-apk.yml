@@ -1,9 +1,11 @@
 name: android-dev-apk
+# SM8475 workflow refresh after enabling Actions
+# Actions indexed on fork
 
 on:
   pull_request:
   push:
-    branches: [android, main, gow3]
+    branches: [android, main, gow3, feature/sm8475-performance]
     tags: ['v*']
   workflow_dispatch:
 
@@ -126,6 +128,21 @@ jobs:
         shell: bash -el {0}
         run: bash ci/setup-deps.sh "$CONDA_PREFIX"
 
+      - name: Preflight graphics build tools
+        shell: bash -el {0}
+        run: |
+          set -euo pipefail
+          echo "Active build environment: ${CONDA_PREFIX:-not-set}"
+          for tool in clang clang++ llvm-ar llvm-strip bison flex ninja cmake pkg-config glslangValidator; do
+            command -v "$tool" || {
+              echo "::error title=Missing graphics build tool::$tool is not available in the build environment"
+              exit 1
+            }
+          done
+          glslangValidator --version
+          bison -Wcounterexamples -V >/dev/null
+          echo "Graphics toolchain preflight passed"
+
       - name: Configure temporary paths
         shell: bash
         run: |
@@ -153,7 +170,14 @@ jobs:
             libc6-dev libstdc++-14-dev libgcc-14-dev linux-libc-dev zlib1g-dev libzstd-dev \
             libexpat1-dev libxcb1-dev libx11-xcb-dev libxcb-xfixes0-dev libxcb-randr0-dev \
             libxcb-dri3-dev libxcb-present-dev libxcb-sync-dev libxcb-shm0-dev libxshmfence-dev \
-            libx11-dev libxrandr-dev libdrm-dev
+            libx11-dev libxrandr-dev libdrm-dev spirv-headers spirv-tools
+
+      - name: Preflight ARM64 linker and libatomic before native builds
+        shell: bash -el {0}
+        run: bash tools/android/build/preflight_turnip_link.sh
+
+      - name: Validate launcher compilation before native runtime
+        run: bash android-launcher/gradlew -p android-launcher :app:compileReleaseJavaWithJavac --no-daemon --max-workers=2
 
       - name: Build ARM64 native runtime
         shell: bash -el {0}
@@ -170,12 +194,16 @@ jobs:
             tools/android/build/kgsl_chip_id.c -o out/arm64/kgsl-chip-id
           find .local-deps/android/migration/x/rootfs/usr/lib/aarch64-linux-gnu \
             -type f -printf '%f\n' | sort -u > "$RUNNER_TEMP/device-libs.txt"
-          python3 tools/android/build/build_arm64_bundle.py \
+          GOW3_SKIP_GAME_PATCH_PARTS=1 python3 tools/android/build/build_arm64_bundle.py \
             --device-libs "$RUNNER_TEMP/device-libs.txt" \
             --sysroot .local-deps/android/arm64-sysroot
 
       - name: Build Turnip and LSFG variants
+        shell: bash -el {0}
         run: |
+          set -euo pipefail
+          command -v glslangValidator
+          glslangValidator --version
           bash tools/android/build/build_turnip.sh main
           bash tools/android/build/build_turnip.sh gen8
           bash tools/android/build/build_lsfg.sh

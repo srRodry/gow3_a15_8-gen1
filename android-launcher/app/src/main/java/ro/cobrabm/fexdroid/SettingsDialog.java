@@ -182,7 +182,7 @@ final class SettingsDialog {
         final RadioGroup upscalers=choices(box,UPSCALER_NAMES,indexOf(UPSCALER_VALUES,get("upscaler","fsr3"),1));
         heading(box,"Render resolution");
         int preset=0;
-        try { preset=Math.max(0,Math.min(4,Integer.parseInt(get("preset","3")))); } catch (NumberFormatException ignored) { preset=3; }
+        try { preset=Math.max(0,Math.min(4,Integer.parseInt(get("preset","4")))); } catch (NumberFormatException ignored) { preset=4; }
         final RadioGroup presets=choices(box,PRESETS,preset);
         // FSR 3.1 frame generation (frame_generation=1) is not wired: shadps4 has no
         // GOW3_FRAME_GEN consumer and no FSR 3.1 frame-gen patch on this tree, so the
