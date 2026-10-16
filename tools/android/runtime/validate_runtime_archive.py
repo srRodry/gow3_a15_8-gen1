@@ -55,6 +55,8 @@ def _elf_records(tar, members, manifest):
                 if entry.get('launch_via_loader')}
     expected = '/data/user/0/%s/files/%s' % (
         manifest['application_id'], manifest['loader'])
+    native_entrypoints = {entry['path'] for entry in manifest['entrypoints']
+                          if entry.get('kind') == 'arm64-elf'}
     records = []
     with tempfile.TemporaryDirectory() as directory:
         for name, member in members.items():
@@ -73,6 +75,12 @@ def _elf_records(tar, members, manifest):
             except ElfError as error:
                 raise ArchiveError('%s: %s' % (name, error)) from error
             interpreter = record['interpreter']
+            native_arm64 = (name in native_entrypoints
+                            or name.startswith(('rootfs/usr/lib/aarch64-linux-gnu/',
+                                                'gow3port/arm64/')))
+            if native_arm64 and record['machine'] != 183:
+                raise ArchiveError('%s is not ARM64 (ELF e_machine=%d)' %
+                                   (name, record['machine']))
             if interpreter and any(token in interpreter for token in FORBIDDEN):
                 raise ArchiveError('%s contains stale interpreter %r' %
                                    (name, interpreter))

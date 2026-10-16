@@ -113,7 +113,11 @@ def validate_tree(root, expected_loader, reject=(), explicit_paths=(), allow_no_
     results = []
     explicit_paths = set(explicit_paths)
     allow_no_interp = set(allow_no_interp)
-    for path in sorted(p for p in root.rglob("*") if p.is_file()):
+    # Absolute rootfs symlinks (e.g. /etc/alternatives/awk) resolve against
+    # the build host. Validate regular files only: archive validation checks
+    # symlinks themselves after scrub() has rewritten their targets.
+    for path in sorted(p for p in root.rglob("*")
+                       if p.is_file() and not p.is_symlink()):
         try:
             info = inspect(path)
         except ElfError as error:
@@ -122,6 +126,16 @@ def validate_tree(root, expected_loader, reject=(), explicit_paths=(), allow_no_
             continue
         interpreter = info["interpreter"]
         relative = path.relative_to(root).as_posix()
+        # Do not permit an x86 ELF, including a .so without PT_INTERP, in
+        # native ARM64 library directories or native runtime entrypoints.
+        native_arm64 = (
+            relative.startswith(('usr/lib/aarch64-linux-gnu/', 'lib/aarch64-linux-gnu/'))
+            or relative in {'usr/bin/FEX', 'usr/bin/Xvfb', 'usr/bin/python3.13',
+                            'usr/libexec/fxshmd'}
+        )
+        if native_arm64 and info['machine'] != 183:
+            raise ElfError('%s is not ARM64 (ELF e_machine=%d)' %
+                           (path, info['machine']))
         # Shared objects normally have no PT_INTERP. A few Debian helper
         # binaries are also valid explicit-loader entrypoints without one;
         # executable entrypoints are enforced by the runtime manifest.

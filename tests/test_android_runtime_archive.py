@@ -47,6 +47,25 @@ class RuntimeArchiveTests(unittest.TestCase):
             result = validate_archive(archive, digest)
             self.assertEqual(result['schema_version'], MANIFEST['schema_version'])
 
+    def test_rejects_x86_library_in_arm64_bundle(self):
+        import io
+        import struct
+        from tools.android.runtime.validate_runtime_archive import _elf_records, _member_map
+        elf = bytearray(64)
+        elf[:4] = b"\x7fELF"
+        elf[4:6] = b"\x02\x01"
+        struct.pack_into("<HHIQQQIHHHHHH", elf, 16,
+                         3, 62, 1, 0, 64, 0, 0, 64, 56, 0, 0, 0, 0)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'bad.tar.gz'
+            with tarfile.open(path, 'w:gz') as archive:
+                item = tarfile.TarInfo('gow3port/arm64/lib/libbad.so')
+                item.size = len(elf)
+                archive.addfile(item, io.BytesIO(elf))
+            with tarfile.open(path, 'r:gz') as archive:
+                with self.assertRaisesRegex(ArchiveError, 'not ARM64'):
+                    _elf_records(archive, _member_map(archive), MANIFEST)
+
     def test_game_content_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             archive = Path(directory) / 'runtime.tar.gz'
