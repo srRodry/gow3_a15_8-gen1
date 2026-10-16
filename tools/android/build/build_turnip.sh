@@ -88,7 +88,7 @@ if [[ ! -f $sysroot/packages.json ]]; then
         libc6-dev libstdc++-14-dev libgcc-14-dev linux-libc-dev zlib1g-dev libzstd-dev \
         libexpat1-dev libxcb1-dev libx11-xcb-dev libxcb-xfixes0-dev libxcb-randr0-dev \
         libxcb-dri3-dev libxcb-present-dev libxcb-sync-dev libxcb-shm0-dev libxshmfence-dev \
-        libx11-dev libxrandr-dev libdrm-dev spirv-tools
+        libx11-dev libxrandr-dev libdrm-dev spirv-headers spirv-tools
 fi
 rm -f "$sysroot/usr/lib/aarch64-linux-gnu/pkgconfig/xcb-keysyms.pc"
 

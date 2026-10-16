@@ -15,6 +15,10 @@ command -v glslangValidator >/dev/null
   echo "cross preflight: ARM64 SPIRV-Tools headers missing from sysroot" >&2
   exit 1
 }
+[[ -f "$sysroot/usr/include/spirv/unified1/spirv.h" ]] || {
+  echo "cross preflight: SPIR-V registry headers missing from sysroot" >&2
+  exit 1
+}
 # The Debian cross sysroot keeps libatomic.a under the GCC target directory.
 # Use the *target* archive explicitly; never resolve it from CONDA_PREFIX.
 shopt -s nullglob
